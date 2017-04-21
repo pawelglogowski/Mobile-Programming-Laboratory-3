@@ -3,6 +3,7 @@ package lab3.services;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Timer;
@@ -30,6 +31,7 @@ public class MyService extends Service {
         initTask();
         timer.scheduleAtFixedRate(timerTask,5000,5000);
         showToast("Service has been started.");
+        Log.d("Service","onStartCommand");
         return super.onStartCommand(intent,flags,startId);
     }
 
@@ -65,6 +67,7 @@ public class MyService extends Service {
     private class MyTimerTask extends TimerTask{
         @Override
         public void run(){
+            Log.d("Service","TimerTask");
             showToast("Your service is still working.");
         }
     }
