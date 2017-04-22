@@ -7,17 +7,12 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 public class BoundService extends Service {
 
     private final IBinder mBinder = new LocalBinder();
     private static int counter;
-    private Timer timer;
-    private TimerTask timerTask;
     private Toast toast;
-    MainActivity activity;
+    private boolean run;
 
     public class LocalBinder extends Binder{
         BoundService getService(){
@@ -27,33 +22,59 @@ public class BoundService extends Service {
 
     public BoundService() {
         this.counter = 0;
+        this.run = true;
     }
 
     @Override
     public void onCreate(){
         super.onCreate();
-        timer = new Timer();
         toast = Toast.makeText(this,"",Toast.LENGTH_SHORT);
-        showToast("Your bound service has been started.");
+
     }
+
+
 
     @Override
     public IBinder onBind(Intent intent) {
-        clearTimer();
-        initTask();
-        timer.scheduleAtFixedRate(timerTask,5000,3000);
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected void onPreExecute(){
+                try{
+                    Thread.sleep(10000);
+                    showToast("Your bound service has been started.");
+                } catch (InterruptedException e) {
+
+                }
+            }
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    while(run){
+                        Thread.sleep(4000);
+                        counter++;
+                        publishProgress(params);
+                    }
+                } catch (Exception exception) {
+
+                }
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(Void... values){
+                super.onProgressUpdate(values);
+                showToast("Your bound service is still working");
+            }
+
+            @Override
+            protected void onPostExecute(Void result){
+                showToast("Your bound service has been stopped");
+            }
+        }.execute();
+
         return mBinder;
-    }
-
-    private void initTask(){
-        timerTask = new MyTimerTask();
-    }
-
-    private void clearTimer(){
-        if(timerTask != null){
-            timerTask.cancel();
-            timer.purge();
-        }
     }
 
     public void showToast(String text){
@@ -61,32 +82,11 @@ public class BoundService extends Service {
         toast.show();
     }
 
-    private class MyTimerTask extends TimerTask{
-        @Override
-        public void run(){
-           new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-
-                        activity.runOnUiThread(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                showToast("Your bound service is still working");
-                            }
-                        });
-                    } catch (Exception exception) {
-
-                    }
-                    return null;
-                }
-            }.execute();
-            counter++;
-        }
-    }
-
     public int getCounter(){
         return this.counter;
+    }
+
+    public void stopRuning(){
+        this.run = false;
     }
 }

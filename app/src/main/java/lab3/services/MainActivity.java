@@ -7,7 +7,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -15,25 +14,24 @@ public class MainActivity extends AppCompatActivity {
 
     private BoundService mService;
     private boolean mBound = false;
+    private Thread t;
+    private Intent boundServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.d("Activity","onCreate");
+
         Context context = getApplicationContext();
+
         Intent serviceIntent = new Intent(context,MyService.class);
         startService(serviceIntent);
-    }
 
-    @Override
-    protected void onStart(){
-        super.onStart();
-
-        Thread t = new Thread(){
+        boundServiceIntent = new Intent(context,BoundService.class);
+        t = new Thread(){
             public void run(){
                 getApplicationContext().bindService(
-                        new Intent(getApplicationContext(), BoundService.class), mConnection,
+                        boundServiceIntent, mConnection,
                         Context.BIND_AUTO_CREATE
                 );
             }
@@ -44,10 +42,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop(){
         super.onStop();
-        if(mBound){
-            unbindService(mConnection);
-            mBound = false;
-        }
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -72,9 +66,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startListActivity(View view) {
+        Intent listActivityIntetn = new Intent(getApplicationContext(),ListActivity.class);
+        startActivity(listActivityIntetn);
         if(mBound){
-            unbindService(mConnection);
             mBound = false;
         }
+        mService.stopRuning();
+        mService.stopService(boundServiceIntent);
     }
 }
